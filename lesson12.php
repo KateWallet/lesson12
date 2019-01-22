@@ -4,39 +4,45 @@ $connection = new PDO('mysql:host=localhost; dbname=academy; charset=utf8', 'roo
 if (isset($_POST['submit'])) {
     $countFiles = count($_FILES['file']['name']);
 
-    for ($i=0; $i<$countFiles; $i++) {
-    $fileName = $_FILES['file']['name'][$i];
-    $fileTmpName = $_FILES['file']['tmp_name'][$i];
-    $fileType = $_FILES['file']['type'][$i];
-    $fileError = $_FILES['file']['error'][$i];
-    $fileSize = $_FILES['file']['size'][$i];
+    if ($countFiles <= 3) {
+        for ($i = 0; $i < $countFiles; $i++) {
+        $fileName = $_FILES['file']['name'][$i];
+        $fileTmpName = $_FILES['file']['tmp_name'][$i];
+        $fileType = $_FILES['file']['type'][$i];
+        $fileError = $_FILES['file']['error'][$i];
+        $fileSize = $_FILES['file']['size'][$i];
 
-    $fileExtension = strtolower(end(explode('.', $fileName)));
-    $fileName = explode('.', $fileName)[0];
-    $fileName = preg_replace('/[0-9]/', '', $fileName);
-    $allowedExtensions = ['jpg', 'jpeg', 'png'];
+        $fileExtension = strtolower(end(explode('.', $fileName)));
+        //$fileName = explode('.', $fileName)[0];
+        $pathinfo = pathinfo($fileName);
+        $fileName = $pathinfo['filename'];
+        $fileName = preg_replace('/[0-9]/', '', $fileName);
+        $allowedExtensions = ['jpg', 'jpeg', 'png'];
 
-    if (in_array($fileExtension, $allowedExtensions)) {
-        if ($fileSize < 6000000) {
-            if ($fileError === 0) {
-                $connection->query("INSERT INTO `images` (`imgname`, `extension`) VALUES ('$fileName', '$fileExtension');");
-                $lastId = $connection->query("SELECT MAX(id) FROM `images`");
-                $lastId = $lastId->fetchAll();
-                $lastId = $lastId[0][0];
-                $fileNameNew = $lastId . $fileName . '.' . $fileExtension;
-                $fileDestination = 'uploads/' . $fileNameNew;
-                move_uploaded_file($fileTmpName, $fileDestination);
-                echo 'Успешно';
+        if (in_array($fileExtension, $allowedExtensions)) {
+            if ($fileSize < 6000000) {
+                if ($fileError === 0) {
+                    $connection->query("INSERT INTO `images` (`imgname`, `extension`) VALUES ('$fileName', '$fileExtension');");
+                    $lastId = $connection->query("SELECT MAX(id) FROM `images`");
+                    $lastId = $lastId->fetchAll();
+                    $lastId = $lastId[0][0];
+                    $fileNameNew = $lastId . $fileName . '.' . $fileExtension;
+                    $fileDestination = 'uploads/' . $fileNameNew;
+                    move_uploaded_file($fileTmpName, $fileDestination);
+                    echo 'Успешно';
+                } else {
+                    echo 'Что-то пошло не так';
+                }
             } else {
-                echo 'Что-то пошло не так';
+                echo 'Слишком большой размер файла';
             }
         } else {
-            echo 'Слишком большой размер файла';
+            echo 'Неверный тип файла';
         }
-    } else {
-        echo 'Неверный тип файла';
     }
-}
+    } else {
+        echo 'Вы можете загрузить максимум 3 изображения одновременно';
+    }
 }
 
 $data = $connection->query('SELECT * FROM `images`');
